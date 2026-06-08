@@ -1,0 +1,1101 @@
+/* =========================================
+   HERBÁRIO DIGITAL DE PLANTAS DANINHAS
+   LPV0671 · ESALQ/USP
+   script.js — Dados e Lógica
+   =========================================
+
+   COMO EDITAR ESPÉCIES:
+   Cada espécie é um objeto com os campos:
+   - sigla:          código da família (ex: "AM")
+   - familia:        nome da família (ex: "Amaranthaceae")
+   - sci:            nome científico
+   - pop:            nome popular
+   - arquivo:        nome exato do arquivo de imagem
+   - caracteristicas: texto da ficha morfológica
+   - importancia:    texto de importância agronômica
+   - hrac:           null (sem resistência/tolerância) ou
+                     { tipo: "resistencia" | "tolerancia" | "mista",
+                       grupos: "...", desc: "..." }
+                     tipo "resistencia" = ⚠ vermelho
+                     tipo "tolerancia"  = ⬡ laranja/âmbar
+                     tipo "mista"       = ambos os badges
+
+   Para ADICIONAR uma espécie: copie um bloco e cole
+   antes do fechamento do array, ajustando os campos.
+
+   Para EDITAR: encontre pelo nome científico e altere
+   o campo desejado.
+
+   ATUALIZAÇÃO 2026-06 (Sufoco):
+   - Campo hrac agora inclui campo `tipo` (resistencia/tolerancia/mista)
+   - Commelina benghalensis, Ipomoea hederifolia, Cyperus rotundus
+     corrigidas de resistência → tolerância natural
+   - Cynodon dactylon atualizado para tipo "mista"
+   - 11 espécies com dados HRAC atualizados conforme lista BR-HRAC 2025
+   - Fichas morfológicas enriquecidas com dados do material de apoio da prova prática
+     (Michel Pontes/Pedroso, ESALQ 2025) e Silva & Silva (Cap. 1 Biologia)
+   ========================================= */
+
+const especies = [
+
+  // ════════════════════════════════════════
+  // AMARANTHACEAE (5)
+  // ════════════════════════════════════════
+  {
+    sigla: "AM", familia: "Amaranthaceae",
+    sci: "Alternanthera tenella", pop: "Apaga-fogo",
+    arquivo: "AM_Alternanthera_tenelia.jpg",
+    caracteristicas: "Erva prostrada a ascendente, muito ramificada, caule avermelhado atingindo 80–120 cm. Folhas opostas oblongas a elípticas, bastante variáveis em forma e tamanho. Flores em glomérulos axilares brancos, sépalos com tricomas. Família Amaranthaceae: flores pequenas sem pétalas verdadeiras, frequentemente com brácteas escariosas.",
+    importancia: "Daninha em pastagens, culturas de ciclo curto e áreas degradadas. Tolerante a solos compactados.",
+    hrac: null
+  },
+  {
+    sigla: "AM", familia: "Amaranthaceae",
+    sci: "Amaranthus deflexus", pop: "Caruru-rasteiro",
+    arquivo: "AM_Amaranthus_deflexus.jpg",
+    caracteristicas: "Porte prostrado a ascendente, caule avermelhado, folhas alternas romboides a ovadas. Inflorescência em espigas terminais e axilares compactas.",
+    importancia: "Infesta hortas, jardins e culturas anuais. Ciclo curto permite múltiplas gerações por safra.",
+    hrac: null
+  },
+  {
+    sigla: "AM", familia: "Amaranthaceae",
+    sci: "Amaranthus hybridus", pop: "Caruru-roxo",
+    arquivo: "AM_Amaranthus_hybridus.jpg",
+    caracteristicas: "Planta ereta e robusta, até 2 m. Caule anguloso avermelhado, folhas grandes romboides e alternas. Panículas longas e densas, esverdeadas a avermelhadas.",
+    importancia: "Uma das plantas daninhas mais problemáticas em culturas de verão (soja, milho, algodão). Alta produção de sementes.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS) · Grupo 5 (FSII)", desc: "Resistência a inibidores de ALS e atrazina em populações do Brasil." }
+  },
+  {
+    sigla: "AM", familia: "Amaranthaceae",
+    sci: "Chenopodium album", pop: "Ançarinha-branca",
+    arquivo: "AM_Chenopodium_album.jpg",
+    caracteristicas: "Erva ereta, coberta por pruína branca (tricomas vesiculares). Folhas romboides a lanceoladas, alternas. Flores pequenas em glomérulos.",
+    importancia: "Cosmopolita. Infesta culturas de inverno. Boa competidora por luz e nutrientes.",
+    hrac: null
+  },
+  {
+    sigla: "AM", familia: "Amaranthaceae",
+    sci: "Chenopodium ambrosioides", pop: "Erva-de-santa-maria",
+    arquivo: "AM_Chenopodium_ambrosioides.jpg",
+    caracteristicas: "Erva aromática, fortemente odorante. Folhas sinuado-dentadas, glândulas secretoras. Inflorescência em espigas foliosas.",
+    importancia: "Daninha de hortas e culturas anuais. Uso medicinal popular.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // APIACEAE (1)
+  // ════════════════════════════════════════
+  {
+    sigla: "AP", familia: "Apiaceae",
+    sci: "Apium leptophyllum", pop: "Gertrudes",
+    arquivo: "AP_Apium_leptophyllum.jpg",
+    caracteristicas: "Erva delicada, folhas finamente divididas, pinadas. Umbelas compostas pequenas, flores brancas. Família Apiaceae: flores em umbelas, fruto esquizocárpico.",
+    importancia: "Daninha em pastagens e culturas de sequeiro. Raramente causa danos econômicos graves.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // ASTERACEAE (20)
+  // ════════════════════════════════════════
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Acanthospermum australe", pop: "Carrapichinho",
+    arquivo: "AS_Acanthospermum_australe.jpg",
+    caracteristicas: "Erva prostrada, ramos opostos. Folhas ovadas, crenadas. Capítulos com frutos espinhosos que se aderem a animais. Família Asteraceae: capítulos com flósculos tubulosos e/ou lígulas.",
+    importancia: "Daninha em pastagens e lavouras. Frutos causam danos mecânicos a animais.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Acanthospermum hispidum", pop: "Carrapicho-de-carneiro",
+    arquivo: "AS_Acanthospermum_hispidum.jpg",
+    caracteristicas: "Erva ereta, hispida. Folhas opostas, ovadas. Capítulos pequenos, frutos com espinhos rígidos em duas fileiras.",
+    importancia: "Infesta pastagens, causando danos à lã de ovinos.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Ageratum conyzoides", pop: "Mentrasto",
+    arquivo: "AS_Ageratum_conyzoides.jpg",
+    caracteristicas: "Erva ereta, pubescente, aromática. Folhas opostas, ovadas, crenadas. Capítulos em corimbos densos, flores lilás a brancas.",
+    importancia: "Daninha importante em culturas de verão, café, citros e pastagens. Alelopática.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS)", desc: "Resistência a inibidores de ALS documentada no Brasil desde 2013 (lista BR-HRAC). Nota: verificar identidade taxonômica — algumas populações identificadas como Praxelis pauciflora." }
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Ambrosia elatior", pop: "Ambrosia-americana",
+    arquivo: "AS_Ambrosia_elatior.jpg",
+    caracteristicas: "Erva ereta, monoica. Folhas pinatipartidas. Capítulos estaminados em espigas terminais, pistilados axilares com brácteas espinhosas.",
+    importancia: "Pólen altamente alergênico. Daninha de fim de ciclo em soja e milho.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Bidens pilosa", pop: "Picão-preto",
+    arquivo: "AS_Bidens_pilosa.jpg",
+    caracteristicas: "Erva ereta, aromática, pouco ramificada. Folhas opostas, pinadas com 3–5 folíolos lanceolados serrados, membranáceas com 5–10 cm. Capítulos com lígulas brancas. Aquênios com aristas retrorsas (auxócora) que grudam em roupas e animais, permitindo disseminação de longa distância.",
+    importancia: "Uma das plantas daninhas mais distribuídas no Brasil. Infesta praticamente todas as culturas. Resistência múltipla confirmada em diferentes regiões.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS) · Grupo 5 (FSII) · Grupo 14 (PPO)", desc: "Resistência múltipla documentada no Brasil: Grupo 2 desde 1993, resistência múltipla Grupos 2+5 desde 2016, Grupo 14 (PPO) desde 2022. Uma das espécies com perfil de resistência mais complexo do acervo." }
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Bidens subalternans", pop: "Picão-preto",
+    arquivo: "AS_Bidens_subalternans.jpg",
+    caracteristicas: "Semelhante a B. pilosa, distingue-se pelas folhas sub-alternas nas porções superiores e variação no número de aristas dos aquênios.",
+    importancia: "Co-ocorre com B. pilosa. Mesmo perfil de dano econômico. Resistência múltipla a três mecanismos de ação confirmada.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS) · Grupo 5 (FSII) · Grupo 9 (EPSPS)", desc: "Resistência múltipla documentada no Brasil: Grupo 2 desde 1996, resistência múltipla Grupos 2+5 desde 2006, Grupo 9 (glyphosate) desde 2023. Espécie com um dos perfis de resistência mais alarmantes do país." }
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Blainvillea rhomboidea", pop: "Erva-palha",
+    arquivo: "AS_Blainvillea_rhomboidea.jpg",
+    caracteristicas: "Erva ereta a subereta, pubescente. Folhas opostas, romboides, dentadas. Capítulos pequenos com lígulas brancas curtas.",
+    importancia: "Daninha de culturas anuais e perenes no Brasil tropical.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Conyza bonariensis", pop: "Buva",
+    arquivo: "AS_Conyza_bonariensis.jpg",
+    caracteristicas: "Erva ereta, caule folioso e quase sem ramificação nos indivíduos adultos. Folhas lineares a lanceoladas. Capítulos numerosos em panículas. Pápus branco abundante.",
+    importancia: "Daninha de inverno/primavera extremamente problemática. Resistência a glyphosate documentada no Brasil desde 2005.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 9 (EPSPS)", desc: "Resistência a glyphosate confirmada no Brasil (BR-HRAC 2005). Atenção: resistência aos Grupos 2 e 22 é atribuída a C. sumatrensis, não a esta espécie." }
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Conyza canadensis", pop: "Buva",
+    arquivo: "AS_Conyza_canadensis.jpg",
+    caracteristicas: "Semelhante a C. bonariensis, com folhas mais estreitas e porte mais alto. Capítulos com lígulas brancas muito curtas.",
+    importancia: "Resistência a glyphosate documentada. Co-ocorre com C. bonariensis.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 9 (EPSPS)", desc: "Resistência a glyphosate confirmada em populações brasileiras (BR-HRAC 2005)." }
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Eclipta alba", pop: "Erva-de-botão",
+    arquivo: "AS_Eclipta_alba.jpg",
+    caracteristicas: "Erva prostrada a ereta, estrigosa. Folhas opostas, lanceoladas, serrilhadas. Capítulos pequenos, brancos.",
+    importancia: "Daninha de áreas úmidas, várzeas, lavouras de arroz e cana.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Emilia fosbergii", pop: "Falsa-serralha",
+    arquivo: "AS_Emilia_fosbergii.jpg",
+    caracteristicas: "Erva ereta, glabra a pubescente. Folhas basais liradas, superiores amplexicaules. Capítulos com flósculos tubulosos vermelhos a laranja.",
+    importancia: "Daninha ruderal. Infesta culturas e jardins.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Galinsoga parviflora", pop: "Picão-branco",
+    arquivo: "AS_Galinsoga_parviflora.jpg",
+    caracteristicas: "Erva ereta, pubescente, 20–40 cm. Folhas opostas, ovadas, trinervadas, membranáceas com 2–4 cm, crenado-serradas. Capítulos com 5 lígulas brancas curtas e flósculos amarelos.",
+    importancia: "Daninha de hortas e culturas de ciclo curto. Ciclo curto com múltiplas gerações por ano.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Gnaphalium spicatum", pop: "Macela",
+    arquivo: "AS_Gnaphalium_spicatum.jpg",
+    caracteristicas: "Erva ereta, lanosa, esbranquiçada. Folhas lanceoladas, decorrentes, lanosas. Capítulos em espigas foliosas.",
+    importancia: "Daninha de pastagens e culturas de inverno. Uso medicinal popular.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Jaegeria hirta", pop: "Erva-de-ouro",
+    arquivo: "AS_Jaegeria_hirta.jpg",
+    caracteristicas: "Erva ereta, pubescente. Folhas opostas, ovadas a lanceoladas. Capítulos pequenos com lígulas amarelas curtas.",
+    importancia: "Daninha de culturas tropicais e áreas perturbadas.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Parthenium hysterophorus", pop: "Losna-branca",
+    arquivo: "AS_Parthenium_hysterophorus.jpg",
+    caracteristicas: "Erva ereta, 50–90 cm, muito ramificada, pubescente em ambas as faces das folhas. Folhas pinatipartidas com 8–15 cm. Capítulos com 5 lígulas brancas muito pequenas. Altamente alelopática.",
+    importancia: "Daninha invasora de alto impacto. Causa dermatite de contato e alergias respiratórias. Resistência a inibidores de ALS documentada no Brasil.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS)", desc: "Resistência a inibidores de ALS documentada no Brasil desde 2004 (lista BR-HRAC)." }
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Siegesbeckia orientalis", pop: "Botão-de-ouro",
+    arquivo: "AS_Siegesbeckia_orientalis.jpg",
+    caracteristicas: "Erva ereta, glanduloso-pubescente. Folhas opostas, triangulares. Capítulos com brácteas externas glandulosas que se aderem a animais.",
+    importancia: "Daninha de culturas perenes e anuais em regiões tropicais.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Sonchus oleraceus", pop: "Serralha",
+    arquivo: "AS_Sonchus_oleraceus.jpg",
+    caracteristicas: "Erva ereta, glabra, com látex branco. Folhas amplexicaules, lirado-pinatipartidas, auriculadas. Capítulos com flósculos amarelos.",
+    importancia: "Daninha cosmopolita de culturas de inverno e hortas.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Tagetes minuta", pop: "Cravo-de-defunto",
+    arquivo: "AS_Tagetes_minuta.jpg",
+    caracteristicas: "Erva ereta, aromática (odor forte). Folhas pinadas, folíolos lanceolados serrados, com glândulas. Capítulos pequenos em corimbos.",
+    importancia: "Invasora em pastagens. Alelopática. Uso potencial como nematicida.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Taraxacum officinale", pop: "Dente-de-leão",
+    arquivo: "AS_Taraxacum_officinale.jpg",
+    caracteristicas: "Erva acaule, raiz pivotante robusta. Folhas em roseta basal, lirado-denteadas. Escapo oco, capítulo único amarelo. Aquênios com pápus plumoso.",
+    importancia: "Daninha de pastagens e gramados. Raiz profunda dificulta controle.",
+    hrac: null
+  },
+  {
+    sigla: "AS", familia: "Asteraceae",
+    sci: "Tridax procumbens", pop: "Erva-de-touro",
+    arquivo: "AS_Tridax_procumbens.jpg",
+    caracteristicas: "Erva prostrada a ascendente, hispida. Folhas opostas, ovado-lanceoladas, denteadas. Capítulos em longos pedúnculos, lígulas tridentadas brancas a creme.",
+    importancia: "Daninha de pastagens e culturas anuais.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // BORAGINACEAE (1)
+  // ════════════════════════════════════════
+  {
+    sigla: "BO", familia: "Boraginaceae",
+    sci: "Heliotropium indicum", pop: "Borragem",
+    arquivo: "BO_Heliotropium_indicum.jpg",
+    caracteristicas: "Erva ereta, hispida. Folhas alternas, ovadas, onduladas. Flores brancas a lilás em cincinos escorpioides. Família Boraginaceae: inflorescência em cimeira escorpioide.",
+    importancia: "Tóxica (alcaloides pirrolizidínicos) para bovinos e equinos. Infesta pastagens.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // BRASSICACEAE (3)
+  // ════════════════════════════════════════
+  {
+    sigla: "BR", familia: "Brassicaceae",
+    sci: "Lepidium virginicum", pop: "Mentruz",
+    arquivo: "BR_Lepidium_virginicum.jpg",
+    caracteristicas: "Erva ereta, com odor acre. Folhas basais pinatipartidas, superiores lineares. Flores brancas em racemos. Frutos em silículas orbiculares. Família Brassicaceae: 4 pétalas em cruz, 6 estames.",
+    importancia: "Daninha de inverno em trigo, cevada e forrageiras.",
+    hrac: null
+  },
+  {
+    sigla: "BR", familia: "Brassicaceae",
+    sci: "Raphanus raphanistrum", pop: "Nabiça",
+    arquivo: "BR_Raphanus_raphanistrum.jpg",
+    caracteristicas: "Erva ereta, hispida. Folhas lirado-pinatipartidas. Flores amarelas com nervuras escuras. Fruto silíqua articulada indeiscente.",
+    importancia: "Daninha problemática em cereais de inverno.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS) · Grupo 5 (FSII)", desc: "Resistência a inibidores de ALS confirmada no Brasil (BR-HRAC 2013). Resistência ao Grupo 5 documentada principalmente em populações australianas." }
+  },
+  {
+    sigla: "BR", familia: "Brassicaceae",
+    sci: "Raphanus sativus", pop: "Rábano",
+    arquivo: "BR_Raphanus_sativus.jpg",
+    caracteristicas: "Semelhante a R. raphanistrum, flores predominantemente lilás a brancas e raiz mais desenvolvida. Forma silvestre ou escape de cultivo.",
+    importancia: "Daninha de culturas de inverno. Usada como adubo verde em sistemas orgânicos. Resistência a ALS documentada no Brasil.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS)", desc: "Resistência a inibidores de ALS documentada no Brasil desde 2001 (lista BR-HRAC)." }
+  },
+
+  // ════════════════════════════════════════
+  // CLEOMACEAE (1)
+  // ════════════════════════════════════════
+  {
+    sigla: "CL", familia: "Cleomaceae",
+    sci: "Cleome affinis", pop: "Mussambê",
+    arquivo: "CL_Cleome_affinis.jpg",
+    caracteristicas: "Erva ereta, glanduloso-viscosa. Folhas palmadas com 3–7 folíolos. Flores com 4 pétalas rosadas a lilás e 6 estames longos. Fruto silíqua.",
+    importancia: "Daninha de culturas anuais e áreas degradadas.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // COMMELINACEAE (1)
+  // ════════════════════════════════════════
+  {
+    sigla: "CM", familia: "Commelinaceae",
+    sci: "Commelina benghalensis", pop: "Trapoeraba",
+    arquivo: "CM_Commelina_benghalensis.jpg",
+    caracteristicas: "Erva prostrada, enraizante nos nós. Folhas alternas, ovadas, com bainha pilosa. 3 pétalas azuis. Possui flores aéreas e subterrâneas (cleistógamas). Família Commelinaceae: flores efêmeras, pétalas livres.",
+    importancia: "Daninha perene muito difícil de controlar. Flores subterrâneas garantem reprodução mesmo após aplicação de herbicidas.",
+    hrac: { tipo: "tolerancia", grupos: "Grupo 9 (EPSPS)", desc: "Tolerância Natural: não responde adequadamente ao glyphosate em doses normais de aplicação. Mecanismo fisiológico intrínseco, não resistência adquirida por seleção." }
+  },
+
+  // ════════════════════════════════════════
+  // CONVOLVULACEAE (2)
+  // ════════════════════════════════════════
+  {
+    sigla: "CV", familia: "Convolvulaceae",
+    sci: "Ipomoea hederifolia", pop: "Corda-de-viola",
+    arquivo: "CV_Ipomoea_hederifolia.jpg",
+    caracteristicas: "Trepadeira volúvel. Folhas alternas, trilobadas a inteiras. Flores tubulosas vermelhas a escarlate. Família Convolvulaceae: corola gamopétala, infundibuliforme ou tubulosa.",
+    importancia: "Daninha trepadeira em soja e milho. Dificulta colheita mecânica.",
+    hrac: { tipo: "tolerancia", grupos: "Grupo 9 (EPSPS)", desc: "Tolerância Natural: sobrevive a doses normais de glyphosate sem ter passado por processo de seleção. Característica fisiológica da espécie." }
+  },
+  {
+    sigla: "CV", familia: "Convolvulaceae",
+    sci: "Ipomoea quamoclit", pop: "Esqueletinho",
+    arquivo: "CV_Ipomoea_quamoclit.jpg",
+    caracteristicas: "Trepadeira volúvel. Folhas pinatipartidas com segmentos lineares muito finos, aspecto esquelético. Flores tubulosas escarlates.",
+    importancia: "Daninha trepadeira em culturas anuais.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // CUCURBITACEAE (1)
+  // ════════════════════════════════════════
+  {
+    sigla: "CU", familia: "Cucurbitaceae",
+    sci: "Momordica charantia", pop: "Melão-de-são-caetano",
+    arquivo: "CU_Momordica_charantia.jpg",
+    caracteristicas: "Trepadeira com gavinhas simples. Folhas palmado-lobadas, 5–7 lobos. Flores amarelas unissexuais. Fruto verrucoso, alaranjado quando maduro.",
+    importancia: "Daninha de culturas perenes (café, citros). Frutos tóxicos.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // CYPERACEAE (5)
+  // ════════════════════════════════════════
+  {
+    sigla: "CY", familia: "Cyperaceae",
+    sci: "Cyperus difformis", pop: "Junquinho",
+    arquivo: "CY_Cyperus_difformis.jpg",
+    caracteristicas: "Erva aquática a semi-aquática. Colmos trígonos. Antela com espiguetas em glomérulos globosos. Família Cyperaceae: colmo trígono, folhas trísticas, sem lígula.",
+    importancia: "Daninha de arroz irrigado e áreas alagadas. Resistência a ALS documentada no Brasil.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS)", desc: "Resistência a inibidores de ALS documentada no Brasil desde 2000 (lista BR-HRAC)." }
+  },
+  {
+    sigla: "CY", familia: "Cyperaceae",
+    sci: "Cyperus esculentus", pop: "Tiriricão",
+    arquivo: "CY_Cyperus_esculentus.jpg",
+    caracteristicas: "Erva perene com rizomas e tubérculos globosos marrons. Colmos trígonos. Espiguetas amareladas em antela aberta.",
+    importancia: "Uma das 10 piores plantas daninhas do mundo. Tubérculos com alta dormência.",
+    hrac: null
+  },
+  {
+    sigla: "CY", familia: "Cyperaceae",
+    sci: "Cyperus ferax", pop: "Capim-de-cheiro",
+    arquivo: "CY_Cyperus_ferax.jpg",
+    caracteristicas: "Erva robusta. Colmos trígonos. Antela com raios longos. Espiguetas acastanhadas, ráquis articulada.",
+    importancia: "Daninha de áreas úmidas e culturas irrigadas.",
+    hrac: null
+  },
+  {
+    sigla: "CY", familia: "Cyperaceae",
+    sci: "Cyperus iria", pop: "Junça",
+    arquivo: "CY_Cyperus_iria.jpg",
+    caracteristicas: "Erva anual. Colmos trígonos. Espiguetas aplanadas em antela laxa, amarelo-esverdeadas.",
+    importancia: "Daninha importante em arroz irrigado e culturas de várzea. Resistência a ALS documentada no Brasil.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS)", desc: "Resistência a inibidores de ALS documentada no Brasil desde 2014 (lista BR-HRAC)." }
+  },
+  {
+    sigla: "CY", familia: "Cyperaceae",
+    sci: "Cyperus rotundus", pop: "Tiririca",
+    arquivo: "CY_Cyperus_rotundus.jpg",
+    caracteristicas: "Erva perene com rizomas e tubérculos pretos em cadeia. Colmos trígonos, liso, sem ramificação. Folhas basais em número de 5–12, carenadas. Espiguetas castanho-avermelhadas. Reprodução quase exclusiva por tubérculos — 1 tubérculo pode gerar até 126 novos em 60 dias, cada um com cerca de 10 gemas.",
+    importancia: "Considerada a planta daninha mais difícil de controlar no mundo. Dificilmente erradicada por herbicidas em dose única.",
+    hrac: { tipo: "tolerancia", grupos: "Grupo 9 (EPSPS)", desc: "Tolerância Natural: dificilmente controlada por glyphosate em dose única, por mecanismo fisiológico intrínseco. Não é resistência adquirida por seleção." }
+  },
+
+  // ════════════════════════════════════════
+  // EUPHORBIACEAE (4)
+  // ════════════════════════════════════════
+  {
+    sigla: "EU", familia: "Euphorbiaceae",
+    sci: "Euphorbia heterophylla", pop: "Amendoim-bravo",
+    arquivo: "EU_Euphorbia_heterophylla.jpg",
+    caracteristicas: "Erva ereta com látex branco. Folhas alternas, polimorfas (lineares a panduradas). Brácteas com mancha avermelhada. Família Euphorbiaceae: látex, ciátio, cápsula tricocal. Sementes com germinação documentada até 25 cm de profundidade, indiferente à presença ou ausência de luz.",
+    importancia: "Principal daninha da soja no Brasil. Resistência múltipla a três mecanismos de ação.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS) · Grupo 9 (EPSPS) · Grupo 14 (PPO)", desc: "Resistência múltipla amplamente documentada no Brasil: Grupo 2 desde 1993 (primeira resistência a ALS no país), resistência múltipla Grupos 2+14 desde 2004, Grupo 9 desde 2019. Tolerância a glyphosate também observada em alguns biótipos." }
+  },
+  {
+    sigla: "EU", familia: "Euphorbiaceae",
+    sci: "Euphorbia hirta", pop: "Erva-de-santa-luzia",
+    arquivo: "EU_Euphorbia_hirta.jpg",
+    caracteristicas: "Erva prostrada a ascendente, híspida, com látex branco. Folhas opostas, ovado-lanceoladas, com mancha avermelhada central. Ciátios em glomérulos axilares.",
+    importancia: "Daninha de culturas de verão e hortas.",
+    hrac: null
+  },
+  {
+    sigla: "EU", familia: "Euphorbiaceae",
+    sci: "Euphorbia hyssopifolia", pop: "Erva-andorinha",
+    arquivo: "EU_Euphorbia_hyssopifolia.jpg",
+    caracteristicas: "Erva ereta a sub-ereta, com látex. Folhas opostas, oblongas a lanceoladas, serrilhadas. Ciátios pequenos com apêndices brancos.",
+    importancia: "Daninha de culturas anuais e perenes em regiões tropicais.",
+    hrac: null
+  },
+  {
+    sigla: "EU", familia: "Euphorbiaceae",
+    sci: "Ricinus communis", pop: "Mamona",
+    arquivo: "EU_Ricinus_communis.jpg",
+    caracteristicas: "Arbusto a arvoreta, glabro, glaucescente. Folhas grandes palmado-lobadas. Racemos com flores estaminadas abaixo e pistiladas acima. Cápsula equinada.",
+    importancia: "Daninha tóxica (ricina). Infesta pastagens e bordas de estrada.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // FABACEAE (5)
+  // ════════════════════════════════════════
+  {
+    sigla: "FA", familia: "Fabaceae",
+    sci: "Aeschynomene denticulata", pop: "Angiquinho",
+    arquivo: "FA_Aeschynomene_denticulata.jpg",
+    caracteristicas: "Erva a subarbusto. Folhas paripinadas com numerosos folíolos, sensíveis ao toque. Flores papilionáceas amarelas. Lomento articulado. Família Fabaceae: flor papilionácea, fruto legume ou lomento.",
+    importancia: "Daninha de arroz irrigado e soja. Caule com medula esponjosa flutua na água.",
+    hrac: null
+  },
+  {
+    sigla: "FA", familia: "Fabaceae",
+    sci: "Desmodium tortuosum", pop: "Carrapicho-beiço-de-boi",
+    arquivo: "FA_Desmodium_tortuosum.jpg",
+    caracteristicas: "Subarbusto ereto, pubescente. Folhas trifolioladas. Flores lilás em racemos. Lomento com 3–6 artículos glanduloso-pegajosos que se aderem a roupas e animais.",
+    importancia: "Daninha de soja e milho. Frutos aderem a colhedoras dificultando a operação.",
+    hrac: null
+  },
+  {
+    sigla: "FA", familia: "Fabaceae",
+    sci: "Indigofera hirsuta", pop: "Anileira",
+    arquivo: "FA_Indigofera_hirsuta.jpg",
+    caracteristicas: "Subarbusto ereto, hirsuíssimo. Folhas imparipinadas com 7–9 folíolos. Flores rosas em racemos densos.",
+    importancia: "Daninha de culturas de verão em solos arenosos.",
+    hrac: null
+  },
+  {
+    sigla: "FA", familia: "Fabaceae",
+    sci: "Senna obtusifolia", pop: "Fedegoso",
+    arquivo: "FA_Senna_obtusifolia.jpg",
+    caracteristicas: "Subarbusto ereto. Folhas paripinadas com 2–3 pares de folíolos obovados, glândula cônica entre os pares. Flores amarelas. Legume linear falcado.",
+    importancia: "Daninha importante em soja, algodão e cana.",
+    hrac: null
+  },
+  {
+    sigla: "FA", familia: "Fabaceae",
+    sci: "Vigna unguiculata", pop: "Feijão-miúdo",
+    arquivo: "FA_Vigna_unguiculata.jpg",
+    caracteristicas: "Erva volúvel a prostrada. Folhas trifolioladas. Flores lilás a azuladas. Vagem cilíndrica. Escape de cultivo.",
+    importancia: "Pode ocorrer como daninha em culturas anuais.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // LAMIACEAE (3)
+  // ════════════════════════════════════════
+  {
+    sigla: "LA", familia: "Lamiaceae",
+    sci: "Hyptis lophantha", pop: "Catirina",
+    arquivo: "LA_Hyptis_lophantha.jpg",
+    caracteristicas: "Subarbusto, caule quadrangular, pubescente. Folhas opostas, ovadas, denteadas, aromáticas. Corola bilabiada azul-lilás. Família Lamiaceae: caule quadrangular, folhas opostas, corola bilabiada.",
+    importancia: "Daninha de pastagens e bordas de lavouras.",
+    hrac: null
+  },
+  {
+    sigla: "LA", familia: "Lamiaceae",
+    sci: "Leonotis nepetifolia", pop: "Cordão-de-frade",
+    arquivo: "LA_Leonotis_nepetifolia.jpg",
+    caracteristicas: "Erva ereta, robusta, caule quadrangular. Folhas opostas, ovadas, crenadas. Flores tubulosas laranja em verticilastros globosos espaçados no caule.",
+    importancia: "Daninha ruderal e de culturas perenes. Porte até 2 m confere alta competitividade.",
+    hrac: null
+  },
+  {
+    sigla: "LA", familia: "Lamiaceae",
+    sci: "Leonurus sibiricus", pop: "Rubim",
+    arquivo: "LA_Leonurus_sibiricus.jpg",
+    caracteristicas: "Erva ereta bienal, caule quadrangular. Folhas profundamente palmatilobadas. Flores rosas a lilás em verticilastros.",
+    importancia: "Daninha de hortas, jardins e culturas anuais.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // MALVACEAE (4)
+  // ════════════════════════════════════════
+  {
+    sigla: "MA", familia: "Malvaceae",
+    sci: "Malvastrum coromandelianum", pop: "Guanxuma",
+    arquivo: "MA_Malvastrum_coromandelianum.jpg",
+    caracteristicas: "Erva a subarbusto, estrelado-pubescente. Folhas ovadas, denteadas. Flores solitárias amarelas. Fruto esquizocarpo com 9–12 mericarpos espinhosos. Família Malvaceae: tricomas estrelados, fruto esquizocarpo.",
+    importancia: "Daninha de culturas anuais e pastagens. Tolerante à seca.",
+    hrac: null
+  },
+  {
+    sigla: "MA", familia: "Malvaceae",
+    sci: "Sida rhombifolia", pop: "Guanxuma-preta",
+    arquivo: "MA_Sida_rhombifolia.jpg",
+    caracteristicas: "Subarbusto ereto, estrelado-tomentoso. Folhas romboides a lanceoladas. Flores amarelas solitárias. Mericarpos com 2 espinhos apicais.",
+    importancia: "Daninha perene muito persistente em pastagens, café e cana.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS)", desc: "Resistência a inibidores de ALS documentada em populações brasileiras." }
+  },
+  {
+    sigla: "MA", familia: "Malvaceae",
+    sci: "Sida cordifolia", pop: "Malva-branca",
+    arquivo: "MA_Sida_cordifolia.jpg",
+    caracteristicas: "Subarbusto ereto, densamente tomentoso. Folhas cordiformes a ovadas, crenadas. Flores amarelas. Mericarpos múcronados.",
+    importancia: "Daninha de pastagens e culturas perenes. Hospedeira de vírus e insetos.",
+    hrac: null
+  },
+  {
+    sigla: "MA", familia: "Malvaceae",
+    sci: "Sida glaziovii", pop: "Guanxuma-branca",
+    arquivo: "MA_Sida_glaziovii.jpg",
+    caracteristicas: "Subarbusto ereto, pubescente. Folhas ovado-lanceoladas. Flores amarelas com 5 pétalas.",
+    importancia: "Daninha de pastagens e bordas de lavoura.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // MOLLUGINACEAE (1)
+  // ════════════════════════════════════════
+  {
+    sigla: "MO", familia: "Molluginaceae",
+    sci: "Mollugo verticillata", pop: "Capim-tapete",
+    arquivo: "MO_Mollugo_verticillata.jpg",
+    caracteristicas: "Erva prostrada, formando tapete. Folhas em verticilos de 5–6, espatuladas. Flores muito pequenas brancas, axilares.",
+    importancia: "Daninha de culturas de verão em solos arenosos.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // ONAGRACEAE (1)
+  // ════════════════════════════════════════
+  {
+    sigla: "ON", familia: "Onagraceae",
+    sci: "Ludwigia leptocarpa", pop: "Cruz-de-malta",
+    arquivo: "ON_Ludwigia_leptocarpa.jpg",
+    caracteristicas: "Erva a subarbusto semi-aquático. Raízes adventícias aerenquimatosas. Folhas alternas, lanceoladas. 5 pétalas amarelas.",
+    importancia: "Daninha de arroz irrigado e áreas alagadas. Alta produção de sementes.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // OXALIDACEAE (2)
+  // ════════════════════════════════════════
+  {
+    sigla: "OX", familia: "Oxalidaceae",
+    sci: "Oxalis corniculata", pop: "Azedinha",
+    arquivo: "OX_Oxalis_corniculata.jpg",
+    caracteristicas: "Erva prostrada, com bulbilhos. Folhas trifolioladas, folíolos obcordados, ácidos (oxalato). Flores amarelas. Cápsula que arremessa sementes.",
+    importancia: "Daninha de hortas, jardins e gramados.",
+    hrac: null
+  },
+  {
+    sigla: "OX", familia: "Oxalidaceae",
+    sci: "Oxalis pes-caprae", pop: "Trevo-azedo",
+    arquivo: "OX_Oxalis_pes-caprae.jpg",
+    caracteristicas: "Erva perene com bulbo profundo. Folhas trifolioladas com pontuações escuras. Flores amarelas brilhantes em umbela.",
+    importancia: "Invasora de difícil controle pelo bulbo profundo. Infesta culturas de inverno.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // PAPAVERACEAE (1)
+  // ════════════════════════════════════════
+  {
+    sigla: "PA", familia: "Papaveraceae",
+    sci: "Argemone mexicana", pop: "Papoula-do-méxico",
+    arquivo: "PA_Argemone_mexicana.jpg",
+    caracteristicas: "Erva ereta, espinhosa, com látex amarelo. Folhas sinuado-pinatipartidas com espinhos na nervura. 4–6 pétalas amarelas. Cápsula espinhosa.",
+    importancia: "Daninha tóxica (alcaloides). Infesta pastagens e bordas de estrada.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // PLANTAGINACEAE (1)
+  // ════════════════════════════════════════
+  {
+    sigla: "PL", familia: "Plantaginaceae",
+    sci: "Plantago tomentosa", pop: "Tanchagem",
+    arquivo: "PL_Plantago_tomentosa.jpg",
+    caracteristicas: "Erva acaule. Folhas em roseta basal, ovadas a elípticas, nervação paralela proeminente. Escapo ereto com espiga densa.",
+    importancia: "Daninha de pastagens, gramados e culturas de inverno.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // POACEAE (19)
+  // ════════════════════════════════════════
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Cenchrus echinatus", pop: "Capim-carrapicho",
+    arquivo: "PO_Cenchrus_echinatus.jpg",
+    caracteristicas: "Gramínea anual, 20–60 cm, colmos geniculados com base levemente arroxeada. Folhas rijas com 10–30 cm. Espigas com fascículos de espiguetas envolvidos por brácteas espinhosas retrorsas. Família Poaceae: colmo cilíndrico oco, folhas dísticas com lígula.",
+    importancia: "Frutos espinhosos causam danos a animais e trabalhadores.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Chloris polydactyla", pop: "Capim-branco",
+    arquivo: "PO_Chloris_polydactyla.jpg",
+    caracteristicas: "Gramínea perene, colmos comprimidos. Racemos digitados, espiguetas com arista longa.",
+    importancia: "Daninha de pastagens e bordas de lavoura.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Cynodon dactylon", pop: "Grama-seda",
+    arquivo: "PO_Cynodon_dactylon.jpg",
+    caracteristicas: "Gramínea perene estolonífera e rizomatosa, 30–50 cm. Folhas glabras na face inferior. Lígula ciliada. 4–6 racemos digitados. Sementes germinam apenas com alternância de temperatura, por isso a reprodução principal é vegetativa, por rizomas e estolões.",
+    importancia: "Daninha perene extremamente persistente em culturas perenes. Apresenta tanto tolerância a glyphosate quanto resistência a gramicidas.",
+    hrac: { tipo: "mista", grupos: "Grupo 9 (EPSPS) — Tolerância · Grupo 1 (ACCase) — Resistência", desc: "Tolerância Natural a glyphosate em doses normais (mecanismo fisiológico intrínseco) e Resistência adquirida a gramicidas do Grupo 1 (ACCase) documentada no Brasil." }
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Dactyloctenium aegyptium", pop: "Capim-mão-de-sapo",
+    arquivo: "PO_Dactyloctenium_aegyptium.jpg",
+    caracteristicas: "Gramínea anual, colmos prostrados a geniculados. 3–6 espigas digitadas com espiguetas pectinadas.",
+    importancia: "Daninha de culturas de verão em solos compactados.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Digitaria horizontalis", pop: "Capim-colchão",
+    arquivo: "PO_Digitaria_horizontalis.jpg",
+    caracteristicas: "Gramínea anual, 30–80 cm, colmos finos com enraizamento nos nós. Folhas com 6–12 cm. Racemos digitados, espiguetas em pares lanceoladas.",
+    importancia: "Ampla ocorrência em culturas anuais.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Digitaria insularis", pop: "Capim-amargoso",
+    arquivo: "PO_Digitaria_insularis.jpg",
+    caracteristicas: "Gramínea perene, cespitosa, 50–100 cm, colmos eretos e robustos. Folhas com 15–25 cm. Rizomas curtos. Panículas de racemos. Espiguetas com tricomas sedosos longos na maturação.",
+    importancia: "Daninha perene de difícil controle. Resistência múltipla a glyphosate e gramicidas amplamente distribuída no Brasil.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 9 (EPSPS) · Grupo 1 (ACCase)", desc: "Resistência a glyphosate confirmada e amplamente distribuída no Brasil (BR-HRAC 2008). Resistência ao Grupo 1 (ACCase — gramicidas) documentada desde 2016, resistência múltipla Grupos 1+9 confirmada desde 2020." }
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Echinochloa colona", pop: "Capim-arroz",
+    arquivo: "PO_Echinochloa_colona.jpg",
+    caracteristicas: "Gramínea anual, colmos prostrados a eretos, com enraizamento nos nós. Sem lígula. Folhas com 15–25 cm. Racemos alternos, espiguetas sem arista.",
+    importancia: "Daninha importante em arroz irrigado e culturas de verão. Germinação viável até 3 cm de profundidade (plantio convencional) e até 1,5 cm (plantio direto).",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS) · Grupo 5 (FSII)", desc: "Resistência a múltiplos mecanismos de ação documentada em populações brasileiras de Echinochloa spp. Espécie não consta diretamente na lista BR-HRAC 2025, mas resistência documentada no Brasil." }
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Eleusine indica", pop: "Capim-pé-de-galinha",
+    arquivo: "PO_Eleusine_indica.jpg",
+    caracteristicas: "Gramínea anual, colmos comprimidos. 2–8 espigas digitadas robustas. Raiz fasciculada intensa.",
+    importancia: "Daninha urbana e de culturas. Resistência múltipla a glyphosate e gramicidas muito preocupante.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 9 (EPSPS) · Grupo 1 (ACCase)", desc: "Resistência a glyphosate documentada no Brasil (BR-HRAC 2003). Resistência ao Grupo 1 confirmada em 2016, resistência múltipla Grupos 1+9 desde 2017." }
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Eragrostis pilosa", pop: "Capim-barbicha-de-alemão",
+    arquivo: "PO_Eragrostis_pilosa.jpg",
+    caracteristicas: "Gramínea anual, colmos eretos a geniculados. Panícula muito ramificada e laxa. Espiguetas pequenas lineares, 4–10 flores.",
+    importancia: "Daninha de culturas de verão em solos arenosos.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Megathyrsus maximus", pop: "Capim-colonião",
+    arquivo: "PO_Megathyrsus_maximus.jpg",
+    caracteristicas: "Gramínea perene, cespitosa, robusta, 1–2 m. Colmos com densa pilosidade nos nós. Folhas glabras com 20–70 cm. Lígula membranosa ciliada. Panícula piramidal ampla. Reprodução por sementes e rizomas.",
+    importancia: "Forrageira escapada de cultivo. Invasora de fragmentos florestais. Planta de introdução mais recente no acervo.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Oplismenus compositus", pop: "Capim-cesto",
+    arquivo: "PO_Oplismenus_compositus.jpg",
+    caracteristicas: "Gramínea perene, prostrada. Folhas lanceoladas com ondulações. Racemos alternos, espiguetas com arista viscosa.",
+    importancia: "Daninha de sub-bosque e culturas perenes sombreadas.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Paspalum dilatatum", pop: "Capim-melado",
+    arquivo: "PO_Paspalum_dilatatum.jpg",
+    caracteristicas: "Gramínea perene cespitosa. Folhas planas largas. 3–5 racemos alternos. Espiguetas ovadas com cílios longos.",
+    importancia: "Daninha de pastagens. Pode hospedar ergot (Claviceps paspali), tóxico para bovinos.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Pennisetum setosum", pop: "Capim-oferecido",
+    arquivo: "PO_Pennisetum_setosum.jpg",
+    caracteristicas: "Gramínea perene cespitosa, colmos robustos. Espiga cilíndrica densa com involucros de cerdas longas.",
+    importancia: "Invasora de pastagens e bordas de estrada.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Rhynchelytrum repens", pop: "Capim-favorito",
+    arquivo: "PO_Rhynchelytrum_repens.jpg",
+    caracteristicas: "Gramínea anual ou perene cespitosa. Panícula laxa, rosada quando jovem. Espiguetas com pelos avermelhados.",
+    importancia: "Daninha de pastagens e áreas degradadas.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Rottboellia exaltata", pop: "Capim-camalote",
+    arquivo: "PO_Rottboellia_exaltata.jpg",
+    caracteristicas: "Gramínea anual robusta, até 3 m. Colmos com tricomas urticantes. Espigas cilíndricas, espiguetas encaixadas na ráquis.",
+    importancia: "Causa dermatite. Alta produção de sementes.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 2 (ALS)", desc: "Resistência a inibidores de ALS documentada na América Central e do Sul." }
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Setaria geniculata", pop: "Capim-rabo-de-raposa",
+    arquivo: "PO_Setaria_geniculata.jpg",
+    caracteristicas: "Gramínea perene, cespitosa. Panícula cilíndrica densa (espiciforme). Espiguetas envolvidas por 4–12 cerdas retrorsas.",
+    importancia: "Daninha de pastagens e culturas anuais.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Sorghum halepense", pop: "Capim-massambará",
+    arquivo: "PO_Sorghum_halepense.jpg",
+    caracteristicas: "Gramínea perene, rizomatosa, robusta, 1–2 m. Colmos com pilosidade nos nós, cerosos. Nervura central branca nas folhas cartáceas e glabras. Panícula piramidal laxa. Espiguetas com arista geniculada. Introdução relativamente recente no Brasil.",
+    importancia: "Uma das piores plantas daninhas do mundo. Rizomas profundos. Produz ácido cianídrico. Resistência a gramicidas e glyphosate documentada.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 1 (ACCase) · Grupo 9 (EPSPS)", desc: "Resistência a gramicidas (Grupo 1 — ACCase) e a glyphosate (Grupo 9 — EPSPS) documentada internacionalmente." }
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Urochloa decumbens", pop: "Capim-braquiária",
+    arquivo: "PO_Urochloa_decumbens.jpg",
+    caracteristicas: "Gramínea perene, estolonífera. Folhas largas, pubescentes. 2–5 racemos alternos. Espiguetas elípticas.",
+    importancia: "Forrageira escapada de cultivo. Invasora de culturas perenes. Alelopática.",
+    hrac: null
+  },
+  {
+    sigla: "PO", familia: "Poaceae",
+    sci: "Urochloa plantaginea", pop: "Capim-marmelada",
+    arquivo: "PO_Urochloa_plantaginea.jpg",
+    caracteristicas: "Gramínea anual, 50–80 cm, colmos geniculados com enraizamento nos nós. Folhas largas, glabras com 10–25 cm. Racemos alternos. Espiguetas elípticas. Germinação viável até 3 cm de profundidade (plantio convencional) e 1,5 cm (plantio direto).",
+    importancia: "Daninha de soja, milho e algodão. Alta competitividade. Resistência a gramicidas documentada no Brasil desde 1997.",
+    hrac: { tipo: "resistencia", grupos: "Grupo 1 (ACCase)", desc: "Resistência a gramicidas (Grupo 1 — ACCase) documentada no Brasil desde 1997 (lista BR-HRAC). Uma das primeiras resistências a gramicidas registradas no país." }
+  },
+
+  // ════════════════════════════════════════
+  // POLYGONACEAE (2)
+  // ════════════════════════════════════════
+  {
+    sigla: "PG", familia: "Polygonaceae",
+    sci: "Polygonum hydropiper", pop: "Erva-de-bicho",
+    arquivo: "PG_Polygonum_hydropiper.jpg",
+    caracteristicas: "Erva ereta a ascendente. Ócreas membranosas com cílios curtos. Folhas lanceoladas, sabor acre (piperina). Espigas pendentes. Família Polygonaceae: ócrea envolvendo o nó.",
+    importancia: "Daninha de áreas úmidas e arroz irrigado.",
+    hrac: null
+  },
+  {
+    sigla: "PG", familia: "Polygonaceae",
+    sci: "Rumex obtusifolius", pop: "Língua-de-vaca",
+    arquivo: "PG_Rumex_obtusifolius.jpg",
+    caracteristicas: "Erva perene robusta com raiz pivotante profunda. Folhas basais cordiformes. Flores em panículas terminais. Frutos com valvas denteadas.",
+    importancia: "Daninha de pastagens. Raiz profunda dificulta controle.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // PORTULACACEAE (1)
+  // ════════════════════════════════════════
+  {
+    sigla: "PT", familia: "Portulacaceae",
+    sci: "Portulaca oleracea", pop: "Beldroega",
+    arquivo: "PT_Portulaca_oleracea.jpg",
+    caracteristicas: "Erva prostrada, suculenta, glabra. Caules avermelhados. Folhas alternas, obovadas, carnosas. Flores amarelas.",
+    importancia: "Daninha de hortas e culturas de verão. Comestível e medicinal.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // RUBIACEAE (3)
+  // ════════════════════════════════════════
+  {
+    sigla: "RU", familia: "Rubiaceae",
+    sci: "Borreria verticillata", pop: "Erva-quente",
+    arquivo: "RU_Borreria_verticillata.jpg",
+    caracteristicas: "Subarbusto ereto, caule quadrangular. Folhas em verticilos de 4–6, lanceoladas. Estípulas com setas. Flores brancas em glomérulos. Família Rubiaceae: folhas opostas com estípula interpeciolar.",
+    importancia: "Daninha de pastagens em solos pobres. Resistente à seca.",
+    hrac: null
+  },
+  {
+    sigla: "RU", familia: "Rubiaceae",
+    sci: "Diodia teres", pop: "Mata-pasto",
+    arquivo: "RU_Diodia_teres.jpg",
+    caracteristicas: "Erva prostrada a ascendente, pubescente. Folhas opostas, lineares a lanceoladas. Estípulas com setas longas. Flores brancas a lilás.",
+    importancia: "Daninha de culturas de verão e pastagens em solos arenosos.",
+    hrac: null
+  },
+  {
+    sigla: "RU", familia: "Rubiaceae",
+    sci: "Richardia brasiliensis", pop: "Poaia-branca",
+    arquivo: "RU_Richardia_brasiliensis.jpg",
+    caracteristicas: "Erva prostrada, pubescente. Folhas opostas, ovadas. Flores brancas em capítulos terminais rodeados por folhas involucrais.",
+    importancia: "Daninha de culturas de verão e pastagens. Ampla distribuição no Brasil.",
+    hrac: null
+  },
+
+  // ════════════════════════════════════════
+  // SOLANACEAE (3)
+  // ════════════════════════════════════════
+  {
+    sigla: "SO", familia: "Solanaceae",
+    sci: "Nicandra physaloides", pop: "Joá-de-capote",
+    arquivo: "SO_Nicandra_physaloides.jpg",
+    caracteristicas: "Erva ereta, robusta. Folhas ovadas, ondulado-denteadas. 5 pétalas azul-lilás soldadas. Fruto baga envolta pelo cálice acrescente inflado. Família Solanaceae: corola gamopétala, antera poricida, fruto baga.",
+    importancia: "Tóxica para animais. Repelente de insetos (alcaloides).",
+    hrac: null
+  },
+  {
+    sigla: "SO", familia: "Solanaceae",
+    sci: "Solanum americanum", pop: "Maria-pretinha",
+    arquivo: "SO_Solanum_americanum.jpg",
+    caracteristicas: "Erva ereta, pubescente. Folhas ovadas. Flores brancas com anteras amarelas em umbelas. Bagas globosas, negras quando maduras.",
+    importancia: "Tóxica (solanina). Hospedeira de pragas e doenças de solanáceas cultivadas.",
+    hrac: null
+  },
+  {
+    sigla: "SO", familia: "Solanaceae",
+    sci: "Solanum sisymbriifolium", pop: "Joá-bravo",
+    arquivo: "SO_Solanum_sisymbriifolium.jpg",
+    caracteristicas: "Subarbusto espinhoso. Folhas pinatilobadas com espinhos nas nervuras. Flores brancas a lilás. Bagas vermelhas maduras.",
+    importancia: "Espinhos dificultam manejo mecânico.",
+    hrac: null
+  },
+
+]; // fim do array especies
+
+
+// ════════════════════════════════════════
+// LÓGICA DO SITE
+// ════════════════════════════════════════
+
+const familias = [...new Set(especies.map(e => e.familia))].sort();
+
+// Contagens separadas por tipo HRAC
+const contagemResistencia = especies.filter(e => e.hrac && (e.hrac.tipo === "resistencia" || e.hrac.tipo === "mista")).length;
+const contagemTolerancia = especies.filter(e => e.hrac && e.hrac.tipo === "tolerancia").length;
+const contagemHRAC = contagemResistencia; // stat principal: resistência confirmada
+
+// Preencher stats do header
+document.getElementById('total-especies').textContent = especies.length;
+document.getElementById('total-familias').textContent = familias.length;
+document.getElementById('total-hrac').textContent = contagemHRAC;
+document.getElementById('count-todas').textContent = especies.length;
+document.getElementById('familia-count-label').textContent = familias.length;
+
+// Construir sidebar de famílias
+const familiaList = document.getElementById('familia-list');
+familias.forEach(f => {
+  const count = especies.filter(e => e.familia === f).length;
+  const li = document.createElement('li');
+  li.className = 'familia-item';
+  li.innerHTML = `
+    <button class="familia-btn" data-familia="${f}">
+      <span class="familia-nome">${f}</span>
+      <span class="familia-count">${count}</span>
+    </button>`;
+  familiaList.appendChild(li);
+});
+
+// Estado da navegação
+let familiaAtiva = 'todas';
+let buscaAtiva = '';
+
+// Renderizar cards
+function renderCards(lista) {
+  const grid = document.getElementById('species-grid');
+  const empty = document.getElementById('empty-state');
+  const countEl = document.getElementById('result-count');
+
+  grid.innerHTML = '';
+  countEl.textContent = `${lista.length} espécie${lista.length !== 1 ? 's' : ''}`;
+
+  if (lista.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  lista.forEach((esp, i) => {
+    const card = document.createElement('div');
+    card.className = 'species-card';
+    card.style.animationDelay = `${i * 0.025}s`;
+    const imgPath = `fotos/${esp.sigla}-${esp.familia}/${esp.arquivo}`;
+
+    // Gerar badges do card
+    let badgesHtml = '';
+    if (esp.hrac) {
+      if (esp.hrac.tipo === 'resistencia') {
+        badgesHtml = '<span class="badge badge-hrac">⚠ Resistência</span>';
+      } else if (esp.hrac.tipo === 'tolerancia') {
+        badgesHtml = '<span class="badge badge-tolerancia">⬡ Tolerância</span>';
+      } else if (esp.hrac.tipo === 'mista') {
+        badgesHtml = '<span class="badge badge-hrac">⚠ Resistência</span><span class="badge badge-tolerancia">⬡ Tolerância</span>';
+      }
+    }
+
+    card.innerHTML = `
+      <div class="card-img-wrap">
+        <img src="${imgPath}" alt="${esp.sci}" loading="lazy"
+          onerror="this.style.opacity=0.15">
+        <div class="card-badges">
+          ${badgesHtml}
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-sciname">${esp.sci}</div>
+        <div class="card-popname">${esp.pop}</div>
+        <div class="card-familia-tag">${esp.familia}</div>
+      </div>`;
+    card.addEventListener('click', () => abrirModal(esp));
+    grid.appendChild(card);
+  });
+}
+
+// Filtrar espécies
+function filtrar() {
+  let lista = especies;
+  if (familiaAtiva !== 'todas') {
+    lista = lista.filter(e => e.familia === familiaAtiva);
+  }
+  if (buscaAtiva.length >= 2) {
+    const q = buscaAtiva.toLowerCase();
+    lista = lista.filter(e =>
+      e.sci.toLowerCase().includes(q) ||
+      e.pop.toLowerCase().includes(q) ||
+      e.familia.toLowerCase().includes(q)
+    );
+  }
+  return lista;
+}
+
+// Selecionar família
+function setFamilia(f) {
+  familiaAtiva = f;
+  document.querySelectorAll('.familia-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.familia === f)
+  );
+  document.getElementById('section-name').textContent =
+    f === 'todas' ? 'Todas as Famílias' : f;
+  document.getElementById('section-subtitle').textContent =
+    f === 'todas' ? 'Acervo completo · APG IV' : `Família ${f}`;
+  renderCards(filtrar());
+}
+
+// Evento da sidebar
+document.getElementById('familia-list').addEventListener('click', e => {
+  const btn = e.target.closest('.familia-btn');
+  if (btn) setFamilia(btn.dataset.familia);
+});
+
+// Evento de busca
+document.getElementById('search-input').addEventListener('input', e => {
+  buscaAtiva = e.target.value.trim();
+  if (buscaAtiva.length >= 2) {
+    familiaAtiva = 'todas';
+    document.querySelectorAll('.familia-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-familia="todas"]').classList.add('active');
+    document.getElementById('section-name').textContent = 'Resultado da Busca';
+    document.getElementById('section-subtitle').textContent = `"${buscaAtiva}"`;
+  } else if (buscaAtiva.length === 0) {
+    setFamilia('todas');
+  }
+  renderCards(filtrar());
+});
+
+// Abrir modal
+function abrirModal(esp) {
+  const imgPath = `fotos/${esp.sigla}-${esp.familia}/${esp.arquivo}`;
+  document.getElementById('modal-img').src = imgPath;
+  document.getElementById('modal-familia').textContent = esp.familia;
+  document.getElementById('modal-sciname').textContent = esp.sci;
+  document.getElementById('modal-popname').textContent = esp.pop;
+  document.getElementById('modal-caracteristicas').textContent = esp.caracteristicas;
+  document.getElementById('modal-importancia').textContent = esp.importancia;
+
+  const hracSection = document.getElementById('modal-hrac-section');
+  if (esp.hrac) {
+    hracSection.style.display = 'block';
+
+    // Título dinâmico conforme tipo
+    const hracTitle = hracSection.querySelector('.hrac-section-title');
+    if (hracTitle) {
+      if (esp.hrac.tipo === 'tolerancia') {
+        hracTitle.textContent = 'Tolerância Natural';
+        hracTitle.className = 'hrac-section-title hrac-title-tolerancia';
+      } else if (esp.hrac.tipo === 'mista') {
+        hracTitle.textContent = 'Resistência & Tolerância (HRAC)';
+        hracTitle.className = 'hrac-section-title hrac-title-mista';
+      } else {
+        hracTitle.textContent = 'Resistência a Herbicidas (HRAC)';
+        hracTitle.className = 'hrac-section-title hrac-title-resistencia';
+      }
+    }
+
+    document.getElementById('modal-hrac-grupos').textContent = esp.hrac.grupos;
+    document.getElementById('modal-hrac-desc').textContent = esp.hrac.desc;
+  } else {
+    hracSection.style.display = 'none';
+  }
+
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+// Fechar modal
+function fecharModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) fecharModal();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') fecharModal();
+});
+
+// Referências toggle
+function toggleRefs() {
+  document.getElementById('ref-toggle').classList.toggle('open');
+  document.getElementById('ref-list').classList.toggle('open');
+}
+
+// Inicializar
+renderCards(filtrar());
+
+// ════════════════════════════════════════
+// CONTROLE DE ABAS
+// ════════════════════════════════════════
+function mostrarAba(aba) {
+  const abaAcervo = document.getElementById('aba-acervo');
+  const abaHrac   = document.getElementById('aba-hrac');
+  const btnAcervo = document.getElementById('tab-acervo');
+  const btnHrac   = document.getElementById('tab-hrac');
+
+  if (aba === 'acervo') {
+    abaAcervo.style.display = '';
+    abaHrac.style.display   = 'none';
+    btnAcervo.classList.add('active');
+    btnHrac.classList.remove('active');
+  } else {
+    abaAcervo.style.display = 'none';
+    abaHrac.style.display   = '';
+    btnAcervo.classList.remove('active');
+    btnHrac.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+// ════════════════════════════════════════
+// ACCORDION HRAC
+// ════════════════════════════════════════
+function toggleGrupo(btn) {
+  const card = btn.closest('.hrac-grupo-card');
+  const aberto = card.classList.contains('aberto');
+
+  // Fecha todos
+  document.querySelectorAll('.hrac-grupo-card.aberto').forEach(c => c.classList.remove('aberto'));
+
+  // Abre o clicado (se estava fechado)
+  if (!aberto) {
+    card.classList.add('aberto');
+    // Scroll suave para o card
+    setTimeout(() => {
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+  }
+}
